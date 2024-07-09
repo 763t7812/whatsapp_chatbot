@@ -14,7 +14,9 @@ app = FastAPI()
 # Set up LangChain components
 os.environ["OPENAI_API_KEY"] = os.getenv("YOUR_OPENAI_API_KEY")
 llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-memory = ConversationBufferMemory()
+
+# Dictionary to store memory for each user
+user_memories = {}
 
 # Define prompt template for LangChain
 prompt_template = PromptTemplate(
@@ -24,13 +26,13 @@ prompt_template = PromptTemplate(
 
     Following are the responses that you have to give to each user choice, additionally reply in the same language as the user.
 
-    First message (always respond with this on the first interaction with the user):
+    First message (always respond with this on the first interaction):
     Hello! I am Bia, Telecof's virtual assistant. I can now give you all the information you need. Please choose the desired option.
     1- for Commercial department.
     2- for Technical support.
     3- for Other matters.
 
-    if the user is not verified then First message (always respond with this on the first interaction with the user):
+    if the user is not verified then First message (always respond with this on the first interaction):
     Hello! I am Bia, Telecof's virtual assistant. I can now give you all the information you need. Please choose the desired option.
     1- for Commercial department.
     2- for Technical support.
@@ -79,17 +81,30 @@ prompt_template = PromptTemplate(
 langchain = LLMChain(
     llm=llm,
     prompt=prompt_template,
-    memory=memory,
+    memory=ConversationBufferMemory(),
 )
 
 @app.post("/query")
 async def query_webhook(query: str = Form(...), user_name: str = Form(None), is_verified: str = Form(...)):
+    user_id = user_name or "anonymous"
+    # Initialize memory for user if not present
+    if user_id not in user_memories:
+        user_memories[user_id] = ConversationBufferMemory()
+
+    memory = user_memories[user_id]
+
+    # Check and refresh memory after 5 messages
+    if len(memory.load_memory_variables({}).get("history", "").split("User: ")) > 6:
+        memory.clear()
+
     # Format the input as a single string
     formatted_input = f"user_name: {user_name}\nquery: {query}\nis_verified: {is_verified}"
     # Retrieve the chat history
     history = memory.load_memory_variables({}).get("history", "")
     # Invoke LangChain with the formatted input
     bot_response = langchain.run({"message": formatted_input, "history": history})
+    # Clean up the response
+    bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
     # Save the conversation
     memory.save_context({"message": formatted_input}, {"response": bot_response})
     return PlainTextResponse(bot_response)
@@ -128,6 +143,16 @@ async def whatsapp_webhook(request: Request):
         name = ""
         is_verified = "no"
 
+    user_id = from_number  # Using phone number as unique identifier
+    if user_id not in user_memories:
+        user_memories[user_id] = ConversationBufferMemory()
+
+    memory = user_memories[user_id]
+
+    # Check and refresh memory after 5 messages
+    if len(memory.load_memory_variables({}).get("history", "").split("User: ")) > 6:
+        memory.clear()
+
     resp = MessagingResponse()
     msg = resp.message()
 
@@ -136,6 +161,8 @@ async def whatsapp_webhook(request: Request):
     # Retrieve the chat history
     history = memory.load_memory_variables({}).get("history", "")
     bot_response = langchain.run({"message": formatted_input, "history": history})
+    # Clean up the response
+    bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
     # Save the conversation context
     memory.save_context({"message": formatted_input}, {"response": bot_response})
 

@@ -96,7 +96,7 @@ langchain = LLMChain(
 
 
 async def load_combined_text():
-    combined_filename = r'.\scrap\+14155238886\+14155238886_combined_data.txt'
+    combined_filename = os.path.abspath(os.path.join('whatsapp', 'scrap', '+14155238886', '+14155238886_combined_data.txt'))
 
     if not os.path.exists(combined_filename):
         print(f"File not found: {combined_filename}")

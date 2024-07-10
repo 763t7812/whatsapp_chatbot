@@ -224,19 +224,23 @@ async def whatsapp_webhook(request: Request):
     if len(memory.load_memory_variables({}).get("history", "").split("User: ")) > 6:
         memory.clear()
 
-    resp = MessagingResponse()
-    msg = resp.message()
-
-    # Use LangChain to process the incoming message
     formatted_input = f"user_name: {name}\nquery: {incoming_msg}\nis_verified: {is_verified}"
-    # Retrieve the chat history
     history = memory.load_memory_variables({}).get("history", "")
     bot_response = langchain.run({"message": formatted_input, "history": history})
-    # Clean up the response
+
     bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
-    # Save the conversation context
+
+    if 'bot' in bot_response.lower():
+        combined_text = await load_combined_text()
+        if combined_text:
+            bot_response = await get_general_answer(incoming_msg, combined_text)
+        else:
+            bot_response = "Sorry, I couldn't retrieve the necessary data."
+
     memory.save_context({"message": formatted_input}, {"response": bot_response})
 
+    resp = MessagingResponse()
+    msg = resp.message()
     msg.body(bot_response)
 
     account_sid = os.getenv('T_sid')
@@ -244,7 +248,7 @@ async def whatsapp_webhook(request: Request):
     client = Client(account_sid, auth_token)
     client.messages.create(
         from_='whatsapp:+14155238886',
-        body=msg.body,  # Use the content of the message
+        body=bot_response,  # Use the content of the message
         to=from_number  
     )
 

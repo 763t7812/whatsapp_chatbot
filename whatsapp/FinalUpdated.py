@@ -28,6 +28,7 @@ app = FastAPI()
 # Set up LangChain components
 llm = OpenAI(api_key=os.getenv("YOUR_OPENAI_API_KEY"))
 
+
 # Dictionary to store memory for each user
 user_memories = {}
 
@@ -35,7 +36,7 @@ user_memories = {}
 prompt_template = PromptTemplate(
     input_variables=["message", "history"],
     template="""
-    Your task as a conversational AI is to engage in a conversation with the user. You never generate the user messages by yourself, you just respond to the user's each query according to the following conditions. You are Bia, Telecof's Virtual Assistant. You are helpful, creative, clever, and very friendly. Bia always addresses the user by their name when possible, additionally always reply in the same language as the user is speaking.
+    Your task as a conversational AI is to engage in a conversation with the user. You never generate the user messages by yourself, you just respond to the user's each query according to the following conditions. You are Bia, Telecof's Virtual Assistant. You are helpful, creative, clever, and very friendly. Bia always addresses the user by their name when available, additionally always reply in the same language as the user is speaking.
 
     Following are the responses that you have to give to each user choice, additionally reply in the same language as the user.
 
@@ -70,7 +71,7 @@ prompt_template = PromptTemplate(
     Very good. Our commercial manager will contact you directly. Thank you very much.
 
     If the user chooses option 2 (Technical support):
-    Hello! I will send you a link with our Support WhatsApp – WhatsApp link +351 934 750 410.
+    I will send you a link with our Support WhatsApp – WhatsApp link +351 934 750 410.
 
     If the user chooses option 3 (Other matters):
     Other matters. Please say what you want.
@@ -79,7 +80,7 @@ prompt_template = PromptTemplate(
     If the user specifies an interest or any complaint or anything (e.g., learning about Telephone Answering Applications/ I want refund):
     Very good. Our manager will contact you directly. Thank you very much [user_name]!
 
-    If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance, but if user asks for the information about any services or products (for example what is telesip) then you should response with 'bot' feel free to ask. Have a great day!), If the user message just contains a number that is not among the choices for example ('4') then say ('The option you selected is not valid. Please choose one of the following options:\n\n1. Commercial Department\n2. Technical Support\n3. Other subjects') and after that if the user continues the conversation you should again respond with the choices message.
+    Always respond with the above defined responses if the user chooses one of the options 1, 2, or 3, If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance, but if user asks for the information about any services or products (for example what is telesip) then you should response with 'bot' feel free to ask. Have a great day!), If the user message just contains a number that is not among the choices for example ('4') then say ('The option you selected is not valid. Please choose one of the following options:\n\n1. Commercial Department\n2. Technical Support\n3. Other subjects') and after that if the user continues the conversation you should again respond with the choices message.
 
     {history}
     User: {message}
@@ -211,7 +212,7 @@ async def whatsapp_webhook(request: Request):
         name = client_info.get("nome", "User")
         is_verified = "yes"
     else:
-        name = ""
+        name = "user"
         is_verified = "no"
 
     user_id = from_number  # Using phone number as unique identifier

@@ -96,7 +96,8 @@ langchain = LLMChain(
 
 
 async def load_combined_text():
-    combined_filename = os.path.abspath(os.path.join('whatsapp', 'scrap', '+14155238886', '+14155238886_combined_data.txt'))
+    base_folder = os.path.join('.', 'scrap', '+14155238886')
+    combined_filename = os.path.join(base_folder, '+14155238886_combined_data.txt')
 
     if not os.path.exists(combined_filename):
         print(f"File not found: {combined_filename}")
@@ -107,8 +108,6 @@ async def load_combined_text():
         combined_text = await file.read()
 
     return combined_text
-
-os.environ["OPENAI_API_KEY"] = os.getenv("YOUR_OPENAI_API_KEY")
 
 
 async def get_general_answer(query: str, combined_text: str) -> str:

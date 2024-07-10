@@ -237,8 +237,13 @@ async def whatsapp_webhook(request: Request):
             bot_response = await get_general_answer(incoming_msg, combined_text)
         else:
             bot_response = "Sorry, I couldn't retrieve the necessary data."
+    
     # Save the conversation context
     memory.save_context({"message": formatted_input}, {"response": bot_response})
+
+    # Reset the history if the bot response contains "You're welcome!"
+    if "you're welcome!" in bot_response.lower():
+        user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
     msg.body(bot_response)
 

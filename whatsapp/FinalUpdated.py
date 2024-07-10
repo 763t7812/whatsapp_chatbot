@@ -80,7 +80,7 @@ prompt_template = PromptTemplate(
     Very good. Our manager will contact you directly. Thank you very much [user_name]!
 
     Always respond with the above defined responses if the user chooses one of the options 1, 2, or 3, If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance, but if user asks for the information about any services or products (for example what is telesip) then you should response with 'bot' feel free to ask. Have a great day!), If the user message just contains a number that is not among the choices for example ('4') then say ('The option you selected is not valid. Please choose one of the following options:\n\n1. Commercial Department\n2. Technical Support\n3. Other subjects') and after that if the user continues the conversation you should again respond with the choices message.
-
+    additionally always reply in the same language as the user is speaking.
     {history}
     User: {message}
     """

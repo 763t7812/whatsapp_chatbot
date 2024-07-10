@@ -8,6 +8,20 @@ from langchain.prompts import PromptTemplate
 import requests
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
+from langchain_community.vectorstores import FAISS
+import aiofiles
+import asyncio
+from langchain.chains import ConversationalRetrievalChain
+from langchain_community.chat_models import ChatOpenAI
+import tempfile
+from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+import logging
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+message_info = None
 
 app = FastAPI()
 
@@ -48,14 +62,10 @@ prompt_template = PromptTemplate(
     If the user chooses 'Clarify commercial doubts':
     Very good. Our commercial manager will contact you directly. Thank you very much.
 
-    If the user is not an everified customer:
+    If the user is not a verified customer:
     Hello [user_name]! We have verified that you are not yet our client. Tell us what you want, please. Learn about Telephone Answering Applications, Automate Customer Service Processes, or Schedule a Commercial Visit without obligation?
 
-    If the user chooses 'Learn about Telephone Answering Applications':
-    Please visit our website for more information on our Telephone Answering Applications. Thank you.
-
-    If the user chooses 'Automate Customer Service Processes':
-    Please visit our website for more information on Automate Customer Service Processes. Thank you.
+    If the user asks for information about the telecof, services or applications that they provide then return just'bot'
 
     If the user chooses 'Schedule a Commercial Visit without obligation':
     Very good. Our commercial manager will contact you directly. Thank you very much.
@@ -70,7 +80,7 @@ prompt_template = PromptTemplate(
     If the user specifies an interest or any complaint or anything (e.g., learning about Telephone Answering Applications/ I want refund):
     Very good. Our manager will contact you directly. Thank you very much [user_name]!
 
-    If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance, feel free to ask. Have a great day!), and after that if the user continues the conversation you should again respond with the choices message
+    If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance, but if user asks for the information about any services or products (for example what is telesip) then you should response with 'bot' feel free to ask. Have a great day!), If the user message just contains a number that is not among the choices for example ('4') then say ('The option you selected is not valid. Please choose one of the following options:\n\n1. Commercial Department\n2. Technical Support\n3. Other subjects') and after that if the user continues the conversation you should again respond with the choices message.
 
     {history}
     User: {message}
@@ -84,28 +94,89 @@ langchain = LLMChain(
     memory=ConversationBufferMemory(),
 )
 
+
+async def load_combined_text():
+    combined_filename = r'.\scrap\+14155238886\+14155238886_combined_data.txt'
+
+    if not os.path.exists(combined_filename):
+        print(f"File not found: {combined_filename}")
+        return None
+
+    combined_text = ""
+    async with aiofiles.open(combined_filename, 'r', encoding='utf-8') as file:
+        combined_text = await file.read()
+
+    return combined_text
+
+os.environ["OPENAI_API_KEY"] = os.getenv("YOUR_OPENAI_API_KEY")
+
+
+async def get_general_answer(query: str, combined_text: str) -> str:
+    chunk_size = 2000
+    chunk_overlap = 200
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    texts = text_splitter.create_documents([combined_text])
+
+    directory = tempfile.mkdtemp()
+    vector_index = FAISS.from_documents(texts, OpenAIEmbeddings())
+    vector_index.save_local(directory)
+    vector_index = FAISS.load_local(directory, OpenAIEmbeddings(), allow_dangerous_deserialization=True)
+
+    retriever = vector_index.as_retriever(search_type="similarity", search_kwargs={"k": 20})
+    conv_interface = ConversationalRetrievalChain.from_llm(ChatOpenAI(temperature=0.5, max_tokens=1024), retriever=retriever)
+
+    # Retrieve the relevant documents
+    retrieved_docs = retriever.get_relevant_documents(query)
+
+    # Log the retrieved chunks and their similarity scores
+    # for idx, doc in enumerate(retrieved_docs):
+    #     logger.info(f"Retrieved chunk {idx+1}: {doc.page_content}")
+
+    # Initialize chat history
+    chat_history = []
+
+    # Check for exact matches within the retrieved documents
+    exact_match_found = False
+    for doc in retrieved_docs:
+        if query.lower() in doc.page_content.lower():
+            logger.info(f"Exact match found in chunk: {doc.page_content}")
+            exact_match_found = True
+            chat_history.append(("system", doc.page_content))
+
+    # Process the query with the conv_interface
+    result = conv_interface({"question": query, "chat_history": chat_history})
+    final_answer = result["answer"]
+
+    if not final_answer:
+        final_answer = "Sorry, I couldn't find relevant information."
+
+    return final_answer
+
+
 @app.post("/query")
 async def query_webhook(query: str = Form(...), user_name: str = Form(None), is_verified: str = Form(...)):
     user_id = user_name or "anonymous"
-    # Initialize memory for user if not present
     if user_id not in user_memories:
         user_memories[user_id] = ConversationBufferMemory()
 
     memory = user_memories[user_id]
 
-    # Check and refresh memory after 5 messages
     if len(memory.load_memory_variables({}).get("history", "").split("User: ")) > 6:
         memory.clear()
 
-    # Format the input as a single string
     formatted_input = f"user_name: {user_name}\nquery: {query}\nis_verified: {is_verified}"
-    # Retrieve the chat history
     history = memory.load_memory_variables({}).get("history", "")
-    # Invoke LangChain with the formatted input
     bot_response = langchain.run({"message": formatted_input, "history": history})
-    # Clean up the response
+
     bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
-    # Save the conversation
+
+    if 'bot' in bot_response.lower():
+        combined_text = await load_combined_text()
+        if combined_text:
+            bot_response = await get_general_answer(query, combined_text)
+        else:
+            bot_response = "Sorry, I couldn't retrieve the necessary data."
+
     memory.save_context({"message": formatted_input}, {"response": bot_response})
     return PlainTextResponse(bot_response)
 

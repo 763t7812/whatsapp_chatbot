@@ -28,7 +28,6 @@ app = FastAPI()
 # Set up LangChain components
 llm = OpenAI(api_key=os.getenv("YOUR_OPENAI_API_KEY"))
 
-
 # Dictionary to store memory for each user
 user_memories = {}
 
@@ -231,6 +230,13 @@ async def whatsapp_webhook(request: Request):
     bot_response = langchain.run({"message": formatted_input, "history": history})
     # Clean up the response
     bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
+
+    if 'bot' in bot_response.lower():
+        combined_text = await load_combined_text()
+        if combined_text:
+            bot_response = await get_general_answer(incoming_msg, combined_text)
+        else:
+            bot_response = "Sorry, I couldn't retrieve the necessary data."
     # Save the conversation context
     memory.save_context({"message": formatted_input}, {"response": bot_response})
 
@@ -241,7 +247,7 @@ async def whatsapp_webhook(request: Request):
     client = Client(account_sid, auth_token)
     client.messages.create(
         from_='whatsapp:+14155238886',
-        body=msg.body,  # Use the content of the message
+        body=bot_response,  # Correctly use the content of the bot response
         to=from_number  
     )
 

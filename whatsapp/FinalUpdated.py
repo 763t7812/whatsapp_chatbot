@@ -77,7 +77,7 @@ prompt_template = PromptTemplate(
     If the user specifies an interest or any complaint or anything (e.g. I want refund/ I have a complaint):
     Muito bem. O nosso gestor vai entrar diretamente consigo. Muito obrigada "user_name"!
 
-    - If the user message just contains a number that is not among the choices for example ('4') then say ('A opção que você selecionou não é válida. Escolha uma das seguintes opções:\n\n1. Departamento Comercial\n2. Suporte Técnico\n3. Outros assuntos') 
+    - If the user message just contains a number that is not among the choices for example ('4') then say ('A opção que selecionou não é válida. Escolha uma das seguintes opções: \n\nDepartamento Comercial -1 \nSuporte Técnico -2 \nOutros assuntos -3') 
 
     additionally always reply in the portuguese (PT-PT) language, If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance feel free to ask. Have a great day!), but if user asks for the information about any services or products (for example what is telesip) then you should response with 'bot', and after that if the user continues the conversation you should again respond with the choices message.
     Never generate whole conversation by yourself.

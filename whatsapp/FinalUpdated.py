@@ -50,16 +50,22 @@ prompt_template = PromptTemplate(
 
     Following are the responses that you have to give to each user query, unless the user's query is not specified below you should always respond according to the following conditions. always replace "user_name" with provided user's name.
 
-    - Always respond with the following message If the user chooses option 1 (Departamento Comercial) and the user is a verified customer then say:
+    - Always respond with the following message If the user messages '1' (Departamento Comercial) and the user is a verified customer then say:
     Departamento Comercial Olá "user_name"! Verificamos que é nosso cliente. Diga-nos o que pretende, por favor. Agendar uma visita comercial ou esclarecer dúvidas comerciais? 
 
-    - Always respond with the following message If the user chooses option 1 (Departamento Comercial) and the user is not a verified customer then say:
+    - Always respond with the following message If the user messages '1' (Departamento Comercial) and the user is not a verified customer then say:
     Olá "user_name"! Verificamos que ainda não é nosso cliente. Diga-nos o que pretende, por favor. Conhecer as Aplicações de Atendimento Telefónico, Automatizar Processos de Atendimento, ou Agendar uma visita Comercial sem compromisso? Conhecer as nossas aplicações de atendimento Telefonico ou Automatizar Processos de Atendimento
 
-    - Always respond with the following message If the user chooses option 2 (Suporte Técnico) then say:
+    - Always respond with the following message If the user messages '2' (Suporte Técnico) and the user is verified then say:
     Suporte Técnico Olá "user_name" Vou-lhe enviar um Link com o whatsapp do nosso Suporte – link do whatsapp +351 934 750 410 3.
 
-    - Always respond with the following message If the user chooses option 3 (Outros assuntos) then say:
+    - Always respond with the following message If the user messages '2' (Suporte Técnico) and the user is not verified then say:
+    Suporte Técnico Olá "user_name" Vou-lhe enviar um Link com o whatsapp do nosso Suporte – link do whatsapp +351 934 750 410 3.
+
+    - Always respond with the following message If the user messages '3' (Outros assuntos) and the user is verified then say:
+    Outros assuntos. Por Favor diga o que pretende.
+
+    - Always respond with the following message If the user messages '3' (Outros assuntos) and the user is not verified then say:
     Outros assuntos. Por Favor diga o que pretende.
 
     - If the user chooses 'Schedule a commercial visit' then say:
@@ -86,7 +92,6 @@ prompt_template = PromptTemplate(
     User: {message}
     """
 )
-
 # Define LangChain
 langchain = LLMChain(
     llm=llm,

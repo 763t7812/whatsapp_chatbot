@@ -143,8 +143,9 @@ async def get_general_answer(query: str, combined_text: str) -> str:
             exact_match_found = True
             chat_history.append(("system", doc.page_content))
 
+    portuguese_query = "Answer the following question in european portuguese: " + query
     # Process the query with the conv_interface
-    result = conv_interface({"question": query, "chat_history": chat_history})
+    result = conv_interface({"question": portuguese_query, "chat_history": chat_history})
     final_answer = result["answer"]
 
     if not final_answer:

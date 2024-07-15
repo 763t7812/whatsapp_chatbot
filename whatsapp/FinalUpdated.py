@@ -278,6 +278,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
                 # Send incoming message to commercial manager if condition met
                 if 'nosso gestor comercial vai entrar diretamente em contacto' in bot_response.lower():
+                    print("Hello")
                     def send_to_commercial_manager():
                         try:
                             twilio_client.messages.create(

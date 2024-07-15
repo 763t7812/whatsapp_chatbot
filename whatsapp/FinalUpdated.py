@@ -81,7 +81,7 @@ prompt_template = PromptTemplate(
 
     additionally always reply in the portuguese (PT-PT) language, If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (You're welcome! If you have any more questions or need further assistance feel free to ask. Have a great day!).
 
-    If user asks for the information about any services or products or information about the company itself (for example: "o que é telesip" or "Conhecer as Aplicações de Atendimento Telefónico" or "aprenda sobre aplicativos de atendimento telefônico" or "Automatizar Processos de Atendimento") then you should respond with 'bot', and after that if the user continues the conversation you should again respond with the choices message.
+    If user asks for the information about any services or products or information about the company itself (for example: "Automatizar Processos de Atendimento" or "Conhecer as Aplicações de Atendimento Telefónico" or "aprenda sobre aplicativos de atendimento telefônico" or "o que é telesip") then you should respond with 'bot', and after that if the user continues the conversation you should again respond with the choices message.
 
     Never generate whole conversation by yourself.
 

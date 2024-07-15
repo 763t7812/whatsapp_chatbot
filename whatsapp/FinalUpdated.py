@@ -273,6 +273,17 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
             return PlainTextResponse(str(resp), media_type='text/xml')
 
+        if 'Our commercial manager will contact you directly' in bot_response.lower():
+           
+            msg.body(incoming_msg)
+
+            await client.messages.create_async(
+                        from_='whatsapp:+14155238886',
+                        body=bot_response,
+                        to='whatsapp:+923312682192', # Set the idempotency key
+                    )
+            return PlainTextResponse(str(resp), media_type='text/xml')
+
         else:
             # Save the conversation context
             memory.save_context({"message": formatted_input}, {"response": bot_response})

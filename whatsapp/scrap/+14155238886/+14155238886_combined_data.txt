@@ -153,49 +153,50 @@ Online agora
 
 
 Automatizar Processos de Atendimento:
-1. Voicebot Intelligent Virtual Assistant
-2. Whatsapp Smart Virtual Assistant
-3. Telecof Whatsapp
-4. Missed/Handled Call Alerts
-5. Automatic Opening Customer File
-6. Telephone Service Custom
-7. SMS via PRAÇA
-8. Voice Appointment Confirmation APP
-9. WhatsApp Integration with CRM App
-10. Mobile APP on your PC
-11. APP Patient Manager
-12. WhatsApp Campaigns/Responses App
-13. Cloud Smart Calendar APP
-14. APP Tracking of Leads with AI
-15. Registration of Law Suit
-16. Channels Smart
-17. Multilingual Automated Service
-18. Smart Auto Call
-19. Automatic Customer Identification
-20. Digital Telephone Service
-21. Service by Departments
-22. Automatic Computer Dialing
-23. Recording Calls
-24. Intelligent Internal Alert System
-25. Call Log CRM/ERP
-26. Cell phone as Extension
-27. Telephone at Computer
-28. Integration with Microsoft Teams
-29. Service Client manager
-30. Reply by SMS
-31. Control of Customer Satisfaction
-32. Numbers Virtual
-33. Automatic Voice Translator
-34. Manager Orders
-35. Recognition for Voice
-36. Service Priority
-37. Service with Company Name
-38. Integration PC/Phone
-39. Contact Center
-40. BIA Demonstration
-41. BIA Technical support
-42. Support for Deaf People
 
+abaixo estão os processos de serviço automatizados:
+1. Assistente Virtual Inteligente Voicebot
+2. Assistente Virtual Inteligente Whatsapp
+3. Telecof WhatsApp
+4. Alertas de Chamadas Não Atendidas/Tratadas
+5. Abertura Automática Ficha do Cliente
+6. Atendimento Telefónico Personalizado
+7. SMS pelo PC
+8. APP Confirmação de Consultas por Voz
+9. App Integração WhatsApp com CRM
+10. APP Telemóvel no seu PC
+11. APP Gestor de Pacientes
+12. App WhatsApp Campanhas/Respostas
+13. APP Agenda Inteligente Cloud
+14. APP Acompanhamento de Leads com IA
+15. Registo de Processos
+16. Canais Inteligentes
+17. Atendimento Automático Multilíngue
+18. Chamada Automática Inteligente
+19. Identificação Automática do Cliente
+20. Atendimento Telefónico Digital
+21. Atendimento por Departamentos
+22. Marcação Automática no Computador
+23. Gravação de Chamadas
+24. Sistema Inteligente de Alertas Internos
+25. Registo de Chamadas CRM/ERP
+26. Telemóvel como Extensão
+27. Telefone no Computador
+28. Integração com Microsoft Teams
+29. Atendimento Gestor de Clientes
+30. Resposta por SMS
+31. Controlo de Satisfação Clientes
+32. Números Virtuais
+33. Tradutor Automático de Voz
+34. Gestor de Encomendas
+35. Reconhecimento por Voz
+36. Atendimento Prioritário
+37. Atendimento com Nome da Empresa
+38. Integração PC/Telefone
+39. Contact Center
+40. BIA Demonstração
+41. BIA Apoio Técnico
+42. Apoio a Pessoas com Surdez
 
 
 1. Assistente Virtual Inteligente Voicebot

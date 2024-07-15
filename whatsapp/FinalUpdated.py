@@ -68,6 +68,10 @@ prompt_template = PromptTemplate(
     - Always respond with the following message If the user messages '3' (Outros assuntos) and the user is not verified then say:
     Outros assuntos. Por Favor diga o que pretende.
 
+    - (After the option 3 user will respond with the matter they want the manager to handle then you say):
+    If the user specifies an interest or any complaint or anything (e.g. I want refund/ I have a complaint):
+    Muito bem. O nosso gestor vai entrar diretamente consigo. Muito obrigada "user's name"!
+
     - If the user chooses 'Schedule a commercial visit' then say:
     Very good. Our commercial manager will contact you directly. Thank you very much.
 
@@ -76,10 +80,6 @@ prompt_template = PromptTemplate(
 
     - If the user chooses 'Schedule a Commercial Visit without obligation' then say:
     Very good. Our commercial manager will contact you directly. Thank you very much. 
-
-    - (After the option 3 user will respond with the matter they want the manager to handle then you say):
-    If the user specifies an interest or any complaint or anything (e.g. I want refund/ I have a complaint):
-    Muito bem. O nosso gestor vai entrar diretamente consigo. Muito obrigada "user's name"!
 
     - If the user message just contains a number that is not among the choices for example ('4') then say ('A opção que você selecionou não é válida. Escolha uma das seguintes opções:\n\n1. Departamento Comercial\n2. Suporte Técnico\n3. Outros assuntos') 
 

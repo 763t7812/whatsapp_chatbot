@@ -203,6 +203,7 @@ def get_task_status(user_id: str) -> dict:
 
 @app.post("/whatsapp")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
+    global purpose, phone, date, name, duration, email, subject, description
     try:
         form = await request.form()
         to_number = form.get('To')
@@ -248,49 +249,115 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             else:
                 bot_response = "Sorry, I couldn't retrieve the necessary data."
 
-        # Save the conversation context
-        memory.save_context({"message": formatted_input}, {"response": bot_response})
+            # Save the conversation context
+            memory.save_context({"message": formatted_input}, {"response": bot_response})
 
-        # Reset the history if the bot response contains "You're welcome!"
-        if "you're welcome!" in bot_response.lower():
-            user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
+            # Reset the history if the bot response contains "You're welcome!"
+            if "you're welcome!" in bot_response.lower():
+                user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
-        msg.body(bot_response)
+            msg.body(bot_response)
 
-        # Use the async client with idempotency key
-        account_sid = os.getenv('T_sid')
-        auth_token = os.getenv('T_token')
-        async with httpx.AsyncClient() as client:
-            twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
+            # Use the async client with idempotency key
+            account_sid = os.getenv('T_sid')
+            auth_token = os.getenv('T_token')
+            async with httpx.AsyncClient() as client:
+                twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
-            def send_message():
-                try:
-                    twilio_client.messages.create(
+                def send_message():
+                    try:
+                        twilio_client.messages.create(
+                            from_='whatsapp:+14155238886',
+                            body=bot_response,
+                            to=from_number
+                        )
+                    except Exception as e:
+                        logging.error(f"Failed to send message: {e}")
+
+                background_tasks.add_task(send_message)
+
+                # Send incoming message to commercial manager if condition met
+                if 'commercial manager will contact you' in bot_response.lower():
+                    def send_to_commercial_manager():
+                        try:
+                            twilio_client.messages.create(
+                                from_='whatsapp:+14155238886',
+                                body=incoming_msg,
+                                to='whatsapp:+923312682192'
+                            )
+                        except Exception as e:
+                            logging.error(f"Failed to send message to commercial manager: {e}")
+
+                    background_tasks.add_task(send_to_commercial_manager)
+
+            return PlainTextResponse(str(resp), media_type='text/xml')
+
+        if 'task' in bot_response.lower():
+            if isinstance(bot_response, dict) and bot_response.get('purpose') != 'bot':
+                purpose = bot_response.get('purpose')
+                phone = bot_response.get('phone')
+                date = bot_response.get('date')
+                name = bot_response.get('name')
+                duration = bot_response.get('duration')
+                email = bot_response.get('email')
+                subject = bot_response.get('subject')
+                description = bot_response.get('description')
+                print(bot_response)
+            schedule = scheduletask(date, phone, duration, name, subject, description, email)
+
+            if schedule == "Task successfully scheduled.":
+                response_message = f"Task for {phone} on {date} has been successfully scheduled."
+            elif "Authentication failed" in schedule:
+                response_message = f"Authentication failed for user {phone}. Please check your username and password, and try again. If the issue persists, contact support for assistance."
+            elif "Phonenumber not supplied" in schedule:
+                response_message = f"Phone number not supplied for {phone}. Ensure you have entered a valid phone number in the format +1234567890."
+            elif "Date not available" in schedule:
+                response_message = f"The selected date and time {date} are not available. Please choose a different date or time slot and try again."
+            elif "Date not supplied" in schedule:
+                response_message = f"A valid date was not supplied for {phone}. Please provide a date in the correct format (e.g., YYYY-MM-DD) and try again."
+            else:
+                response_message = f"Failed to schedule task for {phone} due to an unexpected error: {schedule}. Please try again or contact support if the issue continues."
+
+            msg.body(response_message)
+
+            client.messages.create(
+                from_='whatsapp:+14155238886',
+                body=response_message,
+                to=from_number  
+            )
+
+            return PlainTextResponse(str(resp), media_type='text/xml')
+
+        else:
+            # Save the conversation context
+            memory.save_context({"message": formatted_input}, {"response": bot_response})
+
+            # Reset the history if the bot response contains "You're welcome!"
+            if "you're welcome!" in bot_response.lower():
+                user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
+
+            msg.body(bot_response)
+
+            # Use the async client with idempotency key
+            account_sid = os.getenv('T_sid')
+            auth_token = os.getenv('T_token')
+            client = Client(account_sid, auth_token, http_client=TwilioHttpClient(pool_connections=False))
+
+            async def send_message():
+                try: 
+                    await client.messages.create_async(
                         from_='whatsapp:+14155238886',
                         body=bot_response,
-                        to=from_number
+                        to=from_number, # Set the idempotency key
                     )
                 except Exception as e:
                     logging.error(f"Failed to send message: {e}")
 
             background_tasks.add_task(send_message)
 
-            # Send incoming message to commercial manager if condition met
-            if 'commercial manager will contact you' in bot_response.lower():
-                def send_to_commercial_manager():
-                    try:
-                        twilio_client.messages.create(
-                            from_='whatsapp:+14155238886',
-                            body=incoming_msg,
-                            to='whatsapp:+923435326751'
-                        )
-                    except Exception as e:
-                        logging.error(f"Failed to send message to commercial manager: {e}")
-
-                background_tasks.add_task(send_to_commercial_manager)
-
             return PlainTextResponse(str(resp), media_type='text/xml')
-
+    
     except Exception as e:
         logging.error(f"Error processing WhatsApp webhook: {e}")
         return PlainTextResponse("An error occurred.", media_type='text/xml', status_code=500)
+

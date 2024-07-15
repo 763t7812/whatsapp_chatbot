@@ -56,10 +56,16 @@ prompt_template = PromptTemplate(
     - Always respond with the following message If the user chooses option 1 (Departamento Comercial) and the user is not a verified customer then say:
     Olá "user's name"! Verificamos que ainda não é nosso cliente. Diga-nos o que pretende, por favor. Conhecer as Aplicações de Atendimento Telefónico, Automatizar Processos de Atendimento, ou Agendar uma visita Comercial sem compromisso? Conhecer as nossas aplicações de atendimento Telefonico ou Automatizar Processos de Atendimento
 
-    - Always respond with the following message If the user chooses option 2 (Suporte Técnico) then say:
+    - Always respond with the following message If the user chooses option 2 (Suporte Técnico) and the user is verified then say:
     Suporte Técnico Olá "user's name" Vou-lhe enviar um Link com o whatsapp do nosso Suporte – link do whatsapp +351 934 750 410 3.
 
-    - Always respond with the following message If the user chooses option 3 (Outros assuntos) then say:
+    - Always respond with the following message If the user chooses option 2 (Suporte Técnico) and the user is not verified then say:
+    Suporte Técnico Olá "user's name" Vou-lhe enviar um Link com o whatsapp do nosso Suporte – link do whatsapp +351 934 750 410 3.
+
+    - Always respond with the following message If the user chooses option 3 (Outros assuntos) and the user is verified then say:
+    Outros assuntos. Por Favor diga o que pretende.
+
+    - Always respond with the following message If the user chooses option 3 (Outros assuntos) and the user is not verified then say:
     Outros assuntos. Por Favor diga o que pretende.
 
     - If the user chooses 'Schedule a commercial visit' then say:

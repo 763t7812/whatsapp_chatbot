@@ -68,8 +68,6 @@ prompt_template = PromptTemplate(
     - If the user chooses 'Clarify commercial doubts' then say:
     Muito bem. O nosso gestor comercial vai entrar diretamente em contacto consigo. Muito obrigada
 
-    -If the user asks for information about the telecof for example ("o que é telecof"), or information about services or applications that they provide then return just 'bot'
-
     - If the user chooses 'Schedule a Commercial Visit without obligation' then say:
     Very good. Our commercial manager will contact you directly. Thank you very much. 
 

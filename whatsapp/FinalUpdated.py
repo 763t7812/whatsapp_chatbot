@@ -352,6 +352,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             # Clean up the response
             bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
 
+            # Check if 'bot' is in bot_response.lower()
             if 'bot' in bot_response.lower():
                 combined_text = await load_combined_text()
                 if combined_text:
@@ -359,16 +360,56 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
                 else:
                     bot_response = "Sorry, I couldn't retrieve the necessary data."
 
+                # Save the conversation context
+                memory.save_context({"message": formatted_input}, {"response": bot_response})
+
+                # Reset the history if the bot response contains "De nada"
+                if "De nada" in bot_response.lower():
+                    user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
+
+                msg.body(bot_response)
+
+                # Use the async client without idempotency key for bot responses
+                account_sid = os.getenv('T_sid')
+                auth_token = os.getenv('T_token')
+                async with httpx.AsyncClient() as client:
+                    twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
+
+                    async def send_message():
+                        try:
+                            # Send the bot response to the user
+                            await twilio_client.messages.create_async(
+                                from_='whatsapp:+14155238886',
+                                body=bot_response,
+                                to=from_number
+                            )
+
+                            # Check if the bot response contains "nosso gestor" and forward the message
+                            if "nosso gestor" in bot_response.lower():
+                                print("manager")
+                                await twilio_client.messages.create_async(
+                                    from_='whatsapp:+14155238886',
+                                    body=f"Forwarded message: {incoming_msg}, number: {from_number}",
+                                    to='whatsapp:+923312682192'
+                                )
+    
+                        except Exception as e:
+                            logging.error(f"Failed to send message: {e}")
+    
+                    background_tasks.add_task(send_message)
+    
+                return PlainTextResponse(str(resp), media_type='text/xml')
+
             # Save the conversation context
             memory.save_context({"message": formatted_input}, {"response": bot_response})
 
             # Reset the history if the bot response contains "De nada"
-            if "de nada" in bot_response.lower():
+            if "De nada" in bot_response.lower():
                 user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
             msg.body(bot_response)
 
-            # Use the async client without idempotency key for bot responses
+            # Use the async client with idempotency key for llm responses
             account_sid = os.getenv('T_sid')
             auth_token = os.getenv('T_token')
             async with httpx.AsyncClient() as client:
@@ -376,27 +417,16 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
                 async def send_message():
                     try:
-                        # Send the bot response to the user
                         await twilio_client.messages.create_async(
                             from_='whatsapp:+14155238886',
                             body=bot_response,
-                            to=from_number
+                            to=from_number,
+                            idempotency_key=f"{from_number}-{hash(bot_response)}"
                         )
                     except Exception as e:
                         logging.error(f"Failed to send message: {e}")
 
                 background_tasks.add_task(send_message)
-
-                if "nosso gestor" in bot_response.lower():
-                    logging.info("Forwarding message to manager")
-                    try:
-                        await twilio_client.messages.create(
-                            from_='whatsapp:+14155238886',
-                            body=f"Forwarded message: {incoming_msg}, \nnumber: {from_number}",
-                            to='whatsapp:+917999882'
-                        )
-                    except Exception as e:
-                        logging.error(f"Failed to forward message: {e}")
 
             return PlainTextResponse(str(resp), media_type='text/xml')
 
@@ -522,7 +552,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         memory.save_context({"message": formatted_input}, {"response": bot_response})
 
         # Reset the history if the bot response contains "De nada"
-        if "de nada" in bot_response.lower():
+        if "De nada" in bot_response.lower():
             user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
         msg.body(bot_response)
@@ -551,3 +581,4 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     except Exception as e:
         logging.error(f"Error processing WhatsApp webhook: {e}")
         return PlainTextResponse("An error occurred.", media_type='text/xml', status_code=500)
+

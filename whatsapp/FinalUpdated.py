@@ -54,7 +54,7 @@ def messagepurpose(message):
     payload = {
         "model": "gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": f"You have to detect if the user is asking for the client's information whether about the tasks or other info by giving their phone number, or they want to schedule a new task, if message is for client info/tasks then the word (customer/client/etc...) will be mentioned only then return '[ 'purpose': 'client', 'phone': 'phone number mentioned in the message' ]', if its for scheduling new task/meeting/etc, also if the message contain just date and time then return '[ 'purpose': 'task', 'phone': 'phone number mentioned in the message', 'date': 'date mentioned in the message in format YYYY-MM-DD HH:MM:SS', 'duration': 'duration in minutes (only if the word 'duration is mentioned' and also duration is given)', 'email': 'email if mentioned', 'name':'name if mentioned', 'subject': 'subject if mentioned', 'description': 'description if mentioned' ]' If the message does not contain date or time for example if the user says 'I want to schedule a meeting' then return [ 'purpose': 'incorrecttask', 'response': 'Para agendar uma reunião a sua mensagem deve conter a 'data' e a 'hora' da reunião Pode também adicionar o seu nome e a duração da reunião.'], and if its asking for anything else then return 'bot'."},
+            {"role": "system", "content": f"You have to detect if the user is asking for the client's information whether about the tasks or other info by giving their phone number, or they want to schedule a new task, if message is for client info/tasks then the word (customer/client/etc...) will be mentioned only then return '[ 'purpose': 'client', 'phone': 'phone number mentioned in the message' ]', if its for scheduling new task/meeting/etc, also if the message contain just date and time then return '[ 'purpose': 'task', 'phone': 'phone number mentioned in the message', 'date': 'date mentioned in the message in format YYYY-MM-DD HH:MM:SS', 'duration': 'duration in minutes (only if the word 'duration is mentioned' and also duration is given)', 'email': 'email if mentioned', 'name':'name if mentioned', 'subject': 'subject if mentioned', 'description': 'description if mentioned' ]' If the message does not contain date or time for example if the user says 'I want to schedule a meeting' or 'I want to schedule a meeting without obligation' or 'Agendar uma visita Comercial sem compromisso' or 'Agendar uma visita Comercial' then return [ 'purpose': 'incorrecttask', 'response': 'Para agendar uma reunião a sua mensagem deve conter a 'data' e a 'hora' da reunião Pode também adicionar o seu nome e a duração da reunião.'], always respond in the same format as defined. and if its asking for anything else then return 'llm'."},
             {"role": "user", "content": f"message: {message}"}
         ],
         "temperature": 0.1,
@@ -74,7 +74,7 @@ def messagepurpose(message):
     res = response.json()
     response1 = res['choices'][0]['message']['content']
 
-    if response1 != 'bot':
+    if response1 != 'llm':
         message_info = parse_response(response1)
 
     else:
@@ -96,9 +96,9 @@ prompt_template = PromptTemplate(
     template="""
     Your task as a conversational AI is to engage in a conversation with the user. You should never generate the user messages by yourself, you just respond to the user's each query according to the following conditions. You are Bia, Telecof's Virtual Assistant. You are helpful, creative, clever, and very friendly. Bia always addresses the user by their name when available,  if the name is unknown then address the user by "cliente"
 
-    If user greets then always respond with the following message:
+    If user greets, then always respond with the following message:
     
-    Ola. Sou a Bia, a assistente Virtual da Telecof. Já posso dar todas as informações que
+    Ola. "user's name", Sou a Bia, a assistente Virtual da Telecof. Já posso dar todas as informações que
     precisa. Escolha por favor, a opção pretendida. 
     Departamento Comercial - 1 
     Suporte Técnico - 2 
@@ -135,7 +135,7 @@ prompt_template = PromptTemplate(
 
     additionally always reply in the portuguese (PT-PT) language, If the user responds with any message other than the specified ones then generate an appropriate response, for example if user says ('ok, thanks!'), then your response should be (De nada! Se você tiver mais dúvidas ou precisar de mais assistência, sinta-se à vontade para perguntar. Tenha um ótimo dia!).
 
-    If user asks for the information about any services or products or information about the company itself (for example: "o que é telesip" or "Conhecer as Aplicações de Atendimento Telefónico" or "aprenda sobre aplicativos de atendimento telefônico" or "Automatizar Processos de Atendimento") then you should respond with 'bot', and after that if the user continues the conversation you should again respond with the choices message.
+    - If user asks for the information about any services or products or information about the company itself (for example: "o que é telesip" or "Conhecer as Aplicações de Atendimento Telefónico" or "aprenda sobre aplicativos de atendimento telefônico" or "Automatizar Processos de Atendimento" or "Automate customer service processes" or "tell me about telecof in 2 lines" or etc) then you should respond with 'bot', and after that if the user continues the conversation you should again respond with the choices message.
 
     Never generate whole conversation by yourself.
 
@@ -293,7 +293,7 @@ async def query_webhook(query: str = Form(...), user_name: str = Form(None), is_
     history = memory.load_memory_variables({}).get("history", "")
     bot_response = langchain.run({"message": formatted_input, "history": history})
 
-    bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
+    bot_response = bot_response.replace("Bia:", "").replace("AI:", "").replace("Response:", "").strip()
 
     if 'bot' in bot_response.lower():
         combined_text = await load_combined_text()
@@ -305,6 +305,7 @@ async def query_webhook(query: str = Form(...), user_name: str = Form(None), is_
         memory.save_context({"message": formatted_input}, {"response": bot_response})
         return PlainTextResponse(bot_response)
 
+
 @app.post("/whatsapp")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     global purpose, phone, date, name, duration, email, subject, description
@@ -312,6 +313,8 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         form = await request.form()
         to_number = form.get('To')
         from_number = form.get('From')
+        sender_name = form.get('ProfileName')
+        print(sender_name)
         incoming_msg = form.get('Body', '').lower()
         cleaned_number = from_number.replace('whatsapp:', '')
 
@@ -324,7 +327,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             name = client_info.get("nome", "User")
             is_verified = "yes"
         else:
-            name = "unknown"
+            name = sender_name
             is_verified = "no"
         
         logging.info(f"Client name: {name}")
@@ -342,7 +345,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         # Determine the purpose of the message
         messagepurpose(incoming_msg)
 
-        if message_info == 'bot':
+        if message_info == 'llm':
             # Use LangChain to process the incoming message
             formatted_input = f"user_name: {name}\nquery: {incoming_msg}\nis_verified: {is_verified}"
             history = memory.load_memory_variables({}).get("history", "")
@@ -350,6 +353,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             # Clean up the response
             bot_response = bot_response.replace("Bia:", "").replace("AI:", "").strip()
 
+            # Check if 'bot' is in bot_response.lower()
             if 'bot' in bot_response.lower():
                 combined_text = await load_combined_text()
                 if combined_text:
@@ -357,38 +361,68 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
                 else:
                     bot_response = "Sorry, I couldn't retrieve the necessary data."
 
+                # Save the conversation context
+                memory.save_context({"message": formatted_input}, {"response": bot_response})
+
+                # Reset the history if the bot response contains "De nada"
+                if "De nada" in bot_response.lower():
+                    user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
+
+                msg.body(bot_response)
+
+                # Use the async client without idempotency key for bot responses
+                account_sid = os.getenv('T_sid')
+                auth_token = os.getenv('T_token')
+                async with httpx.AsyncClient() as client:
+                    twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
+
+                    def send_message():
+                        try:
+                            # Send the bot response to the user
+                            twilio_client.messages.create(
+                                from_='whatsapp:+14155238886',
+                                body=bot_response,
+                                to=from_number
+                            )
+
+                            # Check if the bot response contains "nosso gestor" and forward the message
+                            if "nosso gestor" in bot_response.lower():
+                                twilio_client.messages.create(
+                                    from_='whatsapp:+14155238886',
+                                    body=f"Forwarded message: {incoming_msg}, number: {from_number}",
+                                    to='whatsapp:+923312682192'
+                                )
+
+                        except Exception as e:
+                            logging.error(f"Failed to send message: {e}")
+
+                    background_tasks.add_task(send_message)
+
+                return PlainTextResponse(str(resp), media_type='text/xml')
+
             # Save the conversation context
             memory.save_context({"message": formatted_input}, {"response": bot_response})
 
-            # Reset the history if the bot response contains "you're welcome!"
-            if "you're welcome!" in bot_response.lower():
+            # Reset the history if the bot response contains "De nada"
+            if "De nada" in bot_response.lower():
                 user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
             msg.body(bot_response)
 
-            # Use the async client without idempotency key for bot responses
+            # Use the async client with idempotency key for llm responses
             account_sid = os.getenv('T_sid')
             auth_token = os.getenv('T_token')
             async with httpx.AsyncClient() as client:
                 twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
-                def send_message():
+                async def send_message():
                     try:
-                        # Send the bot response to the user
-                        twilio_client.messages.create(
+                        await twilio_client.messages.create_async(
                             from_='whatsapp:+14155238886',
                             body=bot_response,
-                            to=from_number
+                            to=from_number,
+                            idempotency_key=f"{from_number}-{hash(bot_response)}"
                         )
-
-                        # Check if the bot response contains "nosso gestor" and forward the message
-                        if "nosso gestor" in bot_response.lower():
-                            twilio_client.messages.create(
-                                from_='whatsapp:+14155238886',
-                                body=f"Forwarded message: {incoming_msg}, number: {from_number}",
-                                to='whatsapp:+917999882'
-                            )
-
                     except Exception as e:
                         logging.error(f"Failed to send message: {e}")
 
@@ -517,8 +551,8 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         # Save the conversation context if it doesn't match task, client, or greet purposes
         memory.save_context({"message": formatted_input}, {"response": bot_response})
 
-        # Reset the history if the bot response contains "you're welcome!"
-        if "you're welcome!" in bot_response.lower():
+        # Reset the history if the bot response contains "De nada"
+        if "De nada" in bot_response.lower():
             user_memories[user_id] = ConversationBufferMemory()  # Reset the memory for the user
 
         msg.body(bot_response)

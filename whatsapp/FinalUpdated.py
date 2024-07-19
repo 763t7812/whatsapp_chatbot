@@ -314,7 +314,7 @@ async def forward_to_gestor(incoming_msg: str, from_number: str):
             await twilio_client.messages.create(
                 from_='whatsapp:+14155238886',
                 body=f"Forwarded message: {incoming_msg}, \nnumber: {from_number}",
-                to='whatsapp:+923312682192'
+                to='whatsapp:+917999882'
             )
             logging.info("Message forwarded to manager")
         except Exception as e:

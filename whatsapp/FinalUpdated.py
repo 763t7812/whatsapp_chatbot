@@ -73,6 +73,8 @@ def messagepurpose(message):
     response = requests.post(URL, headers=headers, json=payload, stream=False)
     res = response.json()
     response1 = res['choices'][0]['message']['content']
+    response1 = response1.replace("'llm'", "llm")
+    print(response1)
 
     if response1 != 'llm':
         message_info = parse_response(response1)
@@ -168,6 +170,7 @@ async def load_combined_text():
 
 os.environ["OPENAI_API_KEY"] = os.getenv("YOUR_OPENAI_API_KEY")
 
+
 async def get_general_answer(query: str, combined_text: str) -> str:
     chunk_size = 2000
     chunk_overlap = 200
@@ -182,8 +185,9 @@ async def get_general_answer(query: str, combined_text: str) -> str:
     retriever = vector_index.as_retriever(search_type="similarity", search_kwargs={"k": 20})
     conv_interface = ConversationalRetrievalChain.from_llm(ChatOpenAI(temperature=0.5, max_tokens=1024), retriever=retriever)
 
+    replaced_query = query.lower().replace("atendimento telefónico", "Atendimento Telefónico da Aplicações Inteligentes").replace("atendimento telefonico", "Atendimento Telefónico da Aplicações Inteligentes").replace("Conhecer as Aplicações de Atendimento Telefónico", "Aplicações Inteligentes")
     # Retrieve the relevant documents
-    retrieved_docs = retriever.get_relevant_documents(query)
+    retrieved_docs = retriever.get_relevant_documents(replaced_query)
 
     # Log the retrieved chunks and their similarity scores
     # for idx, doc in enumerate(retrieved_docs):
@@ -200,7 +204,7 @@ async def get_general_answer(query: str, combined_text: str) -> str:
             exact_match_found = True
             chat_history.append(("system", doc.page_content))
 
-    portuguese_query = "Answer the following question in european portuguese: " + query
+    portuguese_query = "Answer the following question in european portuguese: " + query + "\n\nIf the query says 'Conhecer as Aplicações de Atendimento Telefónico' then tell them about the telefone answering applications from the Aplicações Inteligentes."
     # Process the query with the conv_interface
     result = conv_interface({"question": portuguese_query, "chat_history": chat_history})
     final_answer = result["answer"]
@@ -314,7 +318,7 @@ async def forward_to_gestor(incoming_msg: str, from_number: str):
             await twilio_client.messages.create(
                 from_='whatsapp:+14155238886',
                 body=f"Forwarded message: {incoming_msg}, \nnumber: {from_number}",
-                to='whatsapp:+917999882'
+                to='whatsapp:+923312682192'
             )
             logging.info("Message forwarded to manager")
         except Exception as e:
@@ -409,7 +413,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
                             await twilio_client.messages.create(
                                 from_='whatsapp:+14155238886',
                                 body=f"Forwarded message: {incoming_msg}, \nnumber: {from_number}",
-                                to='whatsapp:+917999882'
+                                to='whatsapp:+923312682192'
                             )
                             logging.info("Message forwarded to manager")
                         except Exception as e:
@@ -567,7 +571,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
         # Use the async client with idempotency key for non-bot responses
         account_sid = os.getenv('T_sid')
-        auth_token = os.getenv('T_token')
+        auth_token = os.getenv('T_token')   
         async with httpx.AsyncClient() as client:
             twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 

@@ -570,20 +570,20 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
             # Formatting the status response
             if not status or 'tarefas' not in status:  # Check if status is empty or doesn't contain 'tarefas'
-                formatted_status = f"No tasks found for customer {phone}.\n"
+                formatted_status = f"Nenhuma tarefa encontrada para o cliente {phone}.\n"
             else:
-                customer_id = status.get('id', 'Unknown ID')
+                customer_id = status.get('id', 'ID desconhecido')
                 tarefas = status['tarefas']
-                formatted_status = f"Customer ID: {customer_id}\n\n"
-                formatted_status += f"The tasks scheduled with customer {phone} are as follows:\n\n"
+                formatted_status = f"ID do Cliente: {customer_id}\n\n"
+                formatted_status += f"As tarefas agendadas com o cliente {phone} são as seguintes:\n\n"
                 for idx, task in enumerate(tarefas, 1):  # tarefas is a list of tasks
-                    formatted_status += f"{idx}. Task #{idx}:\n"
-                    formatted_status += f"   - Date: {task['data']}\n"
-                    formatted_status += f"   - Time: {task['hora']}\n"
-                    formatted_status += f"   - Subject: {task['assunto']}\n"
+                    formatted_status += f"{idx}. Tarefa #{idx}:\n"
+                    formatted_status += f"   - Data: {task['data']}\n"
+                    formatted_status += f"   - Hora: {task['hora']}\n"
+                    formatted_status += f"   - Assunto: {task['assunto']}\n"
                     if task['descricao']:
-                        formatted_status += f"   - Description: {task['descricao']}\n"
-                    formatted_status += f"   - Task Type: {task['descrTipoTarefa']}\n"
+                        formatted_status += f"   - Descrição: {task['descricao']}\n"
+                    formatted_status += f"   - Tipo de Tarefa: {task['descrTipoTarefa']}\n"
                     formatted_status += "\n"
 
             msg.body(formatted_status)

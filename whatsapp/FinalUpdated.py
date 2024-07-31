@@ -216,7 +216,13 @@ async def get_general_answer(query: str, combined_text: str) -> str:
 
 
 def get_task_status(user_id: str) -> dict:
-    api_url = f"https://mytelecof.com/api/cliente.php?phonenumber={user_id}&auth=Ym90Ond1UE5qYW05TVNNZFpsMzE2VDlJ"
+    # URL encode the user_id
+    encoded_user_id = urllib.parse.quote(user_id, safe='')
+
+    # Print the encoded user_id for debugging purposes
+    print(encoded_user_id)
+    
+    api_url = f"https://mytelecof.com/api/cliente.php?phonenumber={encoded_user_id}&auth=Ym90Ond1UE5qYW05TVNNZFpsMzE2VDlJ"
     
     try:
         response = requests.get(api_url)

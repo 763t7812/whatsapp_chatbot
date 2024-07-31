@@ -21,6 +21,7 @@ from fastapi import BackgroundTasks
 from twilio.http.http_client import TwilioHttpClient
 import httpx
 import json
+import urllib.parse
 
 
 logger = logging.getLogger(__name__)

@@ -386,13 +386,13 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         client_info = get_task_status(cleaned_number)
 
         # Determine if the client is verified
-        if isinstance(client_info, dict) and "id" in client_info:
+        if isinstance(client_info, dict) and "isClient" in client_info:
             name = client_info.get("nome", "User")
-            is_verified = "yes"
+            is_verified = "yes" if client_info.get("isClient") else "no"
         else:
             name = sender_name
             is_verified = "no"
-        
+
         logging.info(f"Client name: {name}")
         logging.info(f"Is verified: {is_verified}")
 

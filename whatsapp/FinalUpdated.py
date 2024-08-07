@@ -384,17 +384,26 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         test_number = 999333999
         # Fetch client info
         client_info = get_task_status(cleaned_number)
-
-        # Determine if the client is verified
-        if isinstance(client_info, dict) and "isClient" in client_info:
+        
+        if isinstance(client_info, dict) and "id" in client_info:
             name = client_info.get("nome", "User")
-            is_verified = "yes" if client_info.get("isClient") else "no"
+            is_verified = "yes"
         else:
             name = sender_name
             is_verified = "no"
-
+        
         logging.info(f"Client name: {name}")
         logging.info(f"Is verified: {is_verified}")
+        # Determine if the client is verified
+        # if isinstance(client_info, dict) and "isClient" in client_info:
+        #     name = client_info.get("nome", "User")
+        #     is_verified = "yes" if client_info.get("isClient") else "no"
+        # else:
+        #     name = sender_name
+        #     is_verified = "no"
+
+        # logging.info(f"Client name: {name}")
+        # logging.info(f"Is verified: {is_verified}")
 
         user_id = from_number  # Using phone number as unique identifier
         if user_id not in user_memories:

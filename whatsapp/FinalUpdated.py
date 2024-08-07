@@ -112,7 +112,7 @@ prompt_template = PromptTemplate(
     Following are the responses that you have to give to each user query, unless the user's query is not specified below you should always respond according to the following conditions. always replace "user's name" with provided user's name.
 
     - Always respond with the following message If the user messages '1' (Departamento Comercial) and the user is a verified customer then say:
-    Departamento Comercial Olá "user's name"! Verificamos que é nosso cliente. Diga-nos o que pretende, por favor. Agendar uma visita comercial ou esclarecer dúvidas comerciais? 
+    Olá "user's name"! Verificamos que é nosso cliente. Diga-nos o que pretende, por favor. Agendar uma visita comercial ou esclarecer dúvidas comerciais? 
 
     - Always respond with the following message If the user messages '1' (Departamento Comercial) and the user is not a verified customer then say:
     Olá "user's name"! Verificamos que ainda não é nosso cliente. Diga-nos o que pretende, por favor. Conhecer as Aplicações de Atendimento Telefónico, Automatizar Processos de Atendimento, ou Agendar uma visita Comercial 

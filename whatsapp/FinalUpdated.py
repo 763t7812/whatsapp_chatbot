@@ -115,7 +115,7 @@ prompt_template = PromptTemplate(
     Departamento Comercial Olá "user's name"! Verificamos que é nosso cliente. Diga-nos o que pretende, por favor. Agendar uma visita comercial ou esclarecer dúvidas comerciais? 
 
     - Always respond with the following message If the user messages '1' (Departamento Comercial) and the user is not a verified customer then say:
-    Olá "user's name"! Verificamos que ainda não é nosso cliente. Diga-nos o que pretende, por favor. Conhecer as Aplicações de Atendimento Telefónico, Automatizar Processos de Atendimento, ou Agendar uma visita Comercial sem compromisso?
+    Olá "user's name"! Verificamos que ainda não é nosso cliente. Diga-nos o que pretende, por favor. Conhecer as Aplicações de Atendimento Telefónico, Automatizar Processos de Atendimento, ou Agendar uma visita Comercial 
 
     - Always respond with the following message If the user messages '2' (Suporte Técnico) and the user is verified then say:
     Suporte Técnico Olá "user's name" Vou-lhe enviar um Link com o whatsapp do nosso Suporte – link do whatsapp +351 934 750 410.

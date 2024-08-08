@@ -1,3 +1,6 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import PlainTextResponse
 import os
@@ -70,6 +73,7 @@ def messagepurpose(message):
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + os.getenv("YOUR_OPENAI_API_KEY")
+        
     }
 
     response = requests.post(URL, headers=headers, json=payload, stream=False)
@@ -235,6 +239,44 @@ def get_task_status(user_id: str) -> dict:
     except Exception as e:
         return {"error": f"Internal server error: {str(e)}"}
 
+def send_email_with_bot_response(sender_email, sender_password, receiver_emails, date, phone, name, smtp_server='smtp.gmail.com', smtp_port=587):
+    """
+    Sends an email with the bot response.
+
+    :param sender_email: The sender's email address.
+    :param sender_password: The sender's email password.
+    :param receiver_emails: A list of the receiver's email addresses.
+    :param date: The desired scheduling date.
+    :param phone: The responsible person's phone number.
+    :param name: The client's name.
+    :param smtp_server: The SMTP server address. Default is 'smtp.gmail.com'.
+    :param smtp_port: The SMTP server port. Default is 587.
+    :return: A string indicating success or failure.
+    """
+    # Create the email
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = ', '.join(receiver_emails)
+    message['Subject'] = 'Pedido WhatsApp Bot Inteligente'
+    
+    body = (
+        f"Assunto: Data de agendamento desejada: {date}\n"
+        f"Telefone Responsável: {phone}"
+    )
+    
+    # Attach the bot response as plain text
+    message.attach(MIMEText(body, 'plain'))
+
+    # Sending the email
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, receiver_emails, message.as_string())
+            return "Email sent successfully."
+    except Exception as e:
+        return f"Failed to send email. Error: {e}"
+
 
 def get_next_available_dates() -> dict:
     api_url = "https://mytelecof.com/api/next-available-dates.php?auth=Ym90Ond1UE5qYW05TVNNZFpsMzE2VDlJ"
@@ -252,7 +294,6 @@ def get_next_available_dates() -> dict:
     
     except Exception as e:
         return {"error": f"Internal server error: {str(e)}"}
-
 
 
 def checkdate(date: str) -> dict:
@@ -445,6 +486,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
                 account_sid = os.getenv('T_sid')
                 auth_token = os.getenv('T_token') 
+                
                 async with httpx.AsyncClient() as client:
                     twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
@@ -506,7 +548,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
                 bot_response = available_dates["error"]
             else:
                 dates_list = available_dates["dates"]
-                bot_response = "Claro! Para agendar uma visita comercial, aqui estão os próximos dados disponíveis para você escolher:\n\n" + "\n".join(dates_list) + "\n\n" + "Por favor, escolha uma das dado e hora acima e informe-me a sua preferência. Se de ou tiver outras perguntas, estou à disposição!"
+                bot_response = "por favor, escolha a data pretendida. Caso não lhe seja possível, informe pff data alternativa. Obrigada.\n\n" + "\n".join(dates_list) + "\n" 
 
 
 
@@ -536,9 +578,21 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             subject = message_info.get('subject')
             description = message_info.get('description')
 
+            sender_email = 'askaritech1990@gmail.com'
+            sender_password = 'wiyh afwc sdua piou'  
+            receiver_emails = [
+                'tgala@telecof.pt',
+                'info@telecof.pt',
+                'cferreira@telecof.pt',
+                'clients@telecof.pt',
+            ]
+
             schedule = scheduletask(date, phone, duration, name, subject, description, email)
 
             if schedule == "Task successfully scheduled.":
+                #response_message = f"Tarefa para {phone} em {date} agendada com sucesso."
+                send_email_with_bot_response(sender_email, sender_password, receiver_emails,date,phone,name)
+                print("hello i am back")
                 response_message = f"Tarefa para {phone} em {date} agendada com sucesso."
             elif "Authentication failed" in schedule:
                 response_message = f"Falha na autenticação para o usuário {phone}. Por favor, verifique seu nome de usuário e senha e tente novamente. Se o problema persistir, entre em contato com o suporte para assistência."
@@ -551,10 +605,12 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             else:
                 response_message = f"Falha ao agendar a tarefa para {phone}. Você pode visitar o seguinte site para agendar a reunião manualmente: https://mytelecof.com/m/agendar-reuniao.php"
 
+
             msg.body(response_message)
 
             account_sid = os.getenv('T_sid')
             auth_token = os.getenv('T_token') 
+            
             async with httpx.AsyncClient() as client:
                 twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
@@ -600,6 +656,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
             account_sid = os.getenv('T_sid')
             auth_token = os.getenv('T_token') 
+            
             async with httpx.AsyncClient() as client:
                 twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
@@ -631,6 +688,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         # Use the async client with idempotency key for non-bot responses
         account_sid = os.getenv('T_sid')
         auth_token = os.getenv('T_token') 
+        
         async with httpx.AsyncClient() as client:
             twilio_client = Client(account_sid, auth_token, http_client=TwilioHttpClient(client))
 
